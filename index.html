@@ -146,6 +146,13 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 12px;
   }
+  td.row-num {
+    color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+    text-align: right;
+    padding-right: 16px;
+  }
   td.id {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 13px;
@@ -264,6 +271,7 @@
       <table id="results-table">
         <thead>
           <tr>
+            <th style="width:48px;">#</th>
             <th style="width:90px;">Status</th>
             <th>Channel Name</th>
             <th>Input URL</th>
@@ -445,8 +453,10 @@ let lastResults = [];
 function setStatus(html) { statusEl.innerHTML = html; }
 
 function rowHtml(r, idx) {
+  const num = `<td class="row-num">${idx + 1}</td>`;
   if (r.pending) {
     return `<tr data-idx="${idx}">
+      ${num}
       <td><span class="badge pending"><span class="spinner"></span>Looking up</span></td>
       <td class="name">—</td>
       <td class="url">${escapeHtml(r.url)}</td>
@@ -455,16 +465,18 @@ function rowHtml(r, idx) {
   }
   if (r.ok) {
     return `<tr data-idx="${idx}">
+      ${num}
       <td><span class="badge ok">Found</span></td>
       <td class="name">${escapeHtml(r.name || "—")}</td>
       <td class="url"><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" style="color:var(--muted);">${escapeHtml(r.url)}</a></td>
       <td class="id">
-        <span class="channel-id">${escapeHtml(r.id)}</span>
-        <button class="copy-btn" data-copy="${escapeHtml(r.id)}">Copy</button>
+        <span class="channel-id">${escapeHtml(r.id)},</span>
+        <button class="copy-btn" data-copy="${escapeHtml(r.id)},">Copy</button>
       </td>
     </tr>`;
   }
   return `<tr data-idx="${idx}">
+    ${num}
     <td><span class="badge err">Error</span></td>
     <td class="name">—</td>
     <td class="url">${escapeHtml(r.url)}</td>
@@ -542,8 +554,11 @@ async function runLookup() {
 }
 
 function copyAll() {
-  const ids = lastResults.filter(r => r.ok).map(r => r.id).join("\n");
-  if (!ids) return;
+  const okIds = lastResults.filter(r => r.ok).map(r => r.id);
+  if (!okIds.length) return;
+  // Each ID gets a trailing ", " and sits on its own line — readable when
+  // pasted, and still parseable as a comma-separated list.
+  const ids = okIds.map(id => id + ", ").join("\n");
   navigator.clipboard.writeText(ids).then(() => {
     copyAllBtn.textContent = "Copied!";
     setTimeout(() => { copyAllBtn.textContent = "Copy All IDs"; }, 1200);
@@ -557,7 +572,7 @@ function exportCsv() {
       r.ok ? "Found" : "Error",
       r.name || "",
       r.url,
-      r.ok ? r.id : (r.error || "")
+      r.ok ? r.id + "," : (r.error || "")
     ]);
   }
   const csv = rows.map(row =>
