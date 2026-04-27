@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YouTube Channel ID Generator</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1f242d;
+    --border: #2a3140;
+    --text: #e6e8eb;
+    --muted: #9aa3b2;
+    --accent: #ff0033;
+    --accent-2: #ff3355;
+    --success: #3ddc84;
+    --error: #ff5577;
+    --warning: #ffb454;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  header h1 {
+    margin: 0 0 8px;
+    font-size: 32px;
+    letter-spacing: -0.02em;
+  }
+  header h1 .accent {
+    color: var(--accent);
+  }
+  header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  label.field-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  textarea:focus {
+    border-color: var(--accent);
+  }
+  .row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 14px;
+  }
+  button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.05s;
+    font-family: inherit;
+  }
+  button:hover:not(:disabled) { background: var(--accent-2); }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.secondary {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  button.secondary:hover:not(:disabled) {
+    background: var(--border);
+  }
+  .status {
+    color: var(--muted);
+    font-size: 14px;
+    margin-left: auto;
+  }
+  .status .success-text { color: var(--success); }
+  .status .error-text { color: var(--error); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+  }
+  th, td {
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    vertical-align: top;
+  }
+  th {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    background: var(--panel-2);
+  }
+  td.url {
+    word-break: break-all;
+    max-width: 320px;
+    color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+  }
+  td.id {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+  }
+  td.id .channel-id {
+    color: var(--success);
+    font-weight: 500;
+  }
+  td.id .error-msg {
+    color: var(--error);
+  }
+  td.name {
+    font-weight: 500;
+  }
+  .copy-btn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    margin-left: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+  .copy-btn.copied {
+    color: var(--success);
+    border-color: var(--success);
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .badge.ok { background: rgba(61, 220, 132, 0.15); color: var(--success); }
+  .badge.err { background: rgba(255, 85, 119, 0.15); color: var(--error); }
+  .badge.pending { background: rgba(255, 180, 84, 0.15); color: var(--warning); }
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .results-header h2 {
+    margin: 0;
+    font-size: 18px;
+  }
+  .results-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 40px;
+  }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1><span class="accent">YouTube</span> Channel ID Generator</h1>
+    <p>Paste one or more YouTube channel URLs (one per line). Get the Channel IDs in seconds.</p>
+  </header>
+
+  <div class="card">
+    <label class="field-label" for="urls">Channel URLs</label>
+    <textarea
+      id="urls"
+      placeholder="https://www.youtube.com/@MrBeast&#10;https://www.youtube.com/c/veritasium&#10;https://www.youtube.com/user/PewDiePie&#10;https://www.youtube.com/channel/UCBJycsmduvYEL83R_U4JriQ"></textarea>
+    <div class="row">
+      <button id="lookup">Get Channel IDs</button>
+      <button id="clear" class="secondary">Clear</button>
+      <button id="sample" class="secondary">Load Examples</button>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <div class="card" id="results-card" style="display:none;">
+    <div class="results-header">
+      <h2>Results</h2>
+      <div class="results-actions">
+        <button id="copy-all" class="secondary">Copy All IDs</button>
+        <button id="export-csv" class="secondary">Export CSV</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table id="results-table">
+        <thead>
+          <tr>
+            <th style="width:90px;">Status</th>
+            <th>Channel Name</th>
+            <th>Input URL</th>
+            <th>Channel ID</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    Channel IDs are extracted from the public YouTube page metadata via a CORS proxy. No data is stored.
+  </footer>
+</div>
+
+<script>
+// ---------- Utilities ----------
+
+// Try multiple public CORS proxies in order. If one is rate-limited or down,
+// the next is tried automatically. Each entry is a function: url -> proxied url.
+const PROXIES = [
+  url => "https://corsproxy.io/?url=" + encodeURIComponent(url),
+  url => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
+  url => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(url),
+  url => "https://cors.eu.org/" + url,
+  url => "https://thingproxy.freeboard.io/fetch/" + url,
+];
+
+function parseUrls(raw) {
+  return raw.split(/[\n,]+/)
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(normalizeUrl);
+}
+
+function normalizeUrl(input) {
+  let s = input.trim();
+  // Strip any trailing punctuation
+  s = s.replace(/[)\].,;]+$/, "");
+  // Add scheme if missing
+  if (!/^https?:\/\//i.test(s)) {
+    if (s.startsWith("@")) {
+      s = "https://www.youtube.com/" + s;
+    } else if (/^(youtube\.com|youtu\.be|m\.youtube\.com)/i.test(s)) {
+      s = "https://" + s;
+    } else if (/^(channel|c|user)\//i.test(s)) {
+      s = "https://www.youtube.com/" + s;
+    } else {
+      // Assume it's a handle without @
+      s = "https://www.youtube.com/@" + s.replace(/^\/+/, "");
+    }
+  }
+  return s;
+}
+
+// Try to extract channel ID directly from /channel/UC... URLs without a network call.
+function extractDirectId(url) {
+  const m = url.match(/\/channel\/(UC[\w-]{20,})/i);
+  return m ? m[1] : null;
+}
+
+// Search HTML for a channel ID. YouTube embeds it in several places:
+//   "channelId":"UC..."
+//   "externalId":"UC..."
+//   <meta itemprop="channelId" content="UC...">
+//   <link rel="canonical" href="https://www.youtube.com/channel/UC...">
+function extractIdFromHtml(html) {
+  const patterns = [
+    /"channelId":"(UC[\w-]{20,})"/,
+    /"externalId":"(UC[\w-]{20,})"/,
+    /"externalChannelId":"(UC[\w-]{20,})"/,
+    /"browseId":"(UC[\w-]{20,})"/,
+    /"ucid":"(UC[\w-]{20,})"/,
+    /itemprop="channelId"\s+content="(UC[\w-]{20,})"/,
+    /<link\s+rel="canonical"\s+href="https?:\/\/www\.youtube\.com\/channel\/(UC[\w-]{20,})"/,
+    /data-channel-external-id="(UC[\w-]{20,})"/,
+    /\/channel\/(UC[\w-]{20,})/,
+  ];
+  for (const p of patterns) {
+    const m = html.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function extractChannelName(html) {
+  let m;
+  m = html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/);
+  if (m) return decodeHtmlEntities(m[1]);
+  m = html.match(/<meta\s+name="title"\s+content="([^"]+)"/);
+  if (m) return decodeHtmlEntities(m[1]);
+  m = html.match(/"title":"([^"\\]+)"/);
+  if (m) return m[1];
+  return "";
+}
+
+function decodeHtmlEntities(s) {
+  const t = document.createElement("textarea");
+  t.innerHTML = s;
+  return t.value;
+}
+
+// Append a language hint to discourage YouTube's EU consent-wall redirect,
+// which strips channel metadata from the HTML.
+function withHl(url) {
+  try {
+    const u = new URL(url);
+    if (!u.searchParams.has("hl")) u.searchParams.set("hl", "en");
+    if (!u.searchParams.has("persist_hl")) u.searchParams.set("persist_hl", "1");
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
+// Try each proxy in turn. A proxy "succeeds" only if its HTML actually contains
+// a channel ID — otherwise we fall through to the next proxy. This handles cases
+// where a proxy returns a truncated page or a consent wall.
+async function fetchAndExtract(url) {
+  const target = withHl(url);
+  let lastError = null;
+  for (let i = 0; i < PROXIES.length; i++) {
+    const proxied = PROXIES[i](target);
+    try {
+      const resp = await fetch(proxied, { method: "GET" });
+      if (!resp.ok) {
+        lastError = new Error("HTTP " + resp.status + " (proxy " + (i + 1) + ")");
+        continue;
+      }
+      const html = await resp.text();
+      if (!html || html.length < 500) {
+        lastError = new Error("Empty response (proxy " + (i + 1) + ")");
+        continue;
+      }
+      const id = extractIdFromHtml(html);
+      if (id) {
+        return { id, name: extractChannelName(html) };
+      }
+      // Got HTML but no ID — likely a consent or error page. Try next proxy.
+      lastError = new Error("No ID in response (proxy " + (i + 1) + ")");
+    } catch (err) {
+      lastError = new Error((err.message || String(err)) + " (proxy " + (i + 1) + ")");
+    }
+  }
+  throw lastError || new Error("All proxies failed");
+}
+
+async function lookupOne(url) {
+  const direct = extractDirectId(url);
+  if (direct) {
+    // Try to fetch the page for the channel name, but don't fail if it errors.
+    try {
+      const { name } = await fetchAndExtract(url);
+      return { url, id: direct, name, ok: true };
+    } catch {
+      return { url, id: direct, name: "", ok: true };
+    }
+  }
+  const { id, name } = await fetchAndExtract(url);
+  return { url, id, name, ok: true };
+}
+
+// ---------- UI ----------
+
+const $ = id => document.getElementById(id);
+const urlsEl = $("urls");
+const lookupBtn = $("lookup");
+const clearBtn = $("clear");
+const sampleBtn = $("sample");
+const statusEl = $("status");
+const resultsCard = $("results-card");
+const resultsBody = $("results-body");
+const copyAllBtn = $("copy-all");
+const exportBtn = $("export-csv");
+
+let lastResults = [];
+
+function setStatus(html) { statusEl.innerHTML = html; }
+
+function rowHtml(r, idx) {
+  if (r.pending) {
+    return `<tr data-idx="${idx}">
+      <td><span class="badge pending"><span class="spinner"></span>Looking up</span></td>
+      <td class="name">—</td>
+      <td class="url">${escapeHtml(r.url)}</td>
+      <td class="id">—</td>
+    </tr>`;
+  }
+  if (r.ok) {
+    return `<tr data-idx="${idx}">
+      <td><span class="badge ok">Found</span></td>
+      <td class="name">${escapeHtml(r.name || "—")}</td>
+      <td class="url"><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" style="color:var(--muted);">${escapeHtml(r.url)}</a></td>
+      <td class="id">
+        <span class="channel-id">${escapeHtml(r.id)}</span>
+        <button class="copy-btn" data-copy="${escapeHtml(r.id)}">Copy</button>
+      </td>
+    </tr>`;
+  }
+  return `<tr data-idx="${idx}">
+    <td><span class="badge err">Error</span></td>
+    <td class="name">—</td>
+    <td class="url">${escapeHtml(r.url)}</td>
+    <td class="id"><span class="error-msg">${escapeHtml(r.error || "Unknown error")}</span></td>
+  </tr>`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+  }[ch]));
+}
+
+function render() {
+  if (!lastResults.length) {
+    resultsCard.style.display = "none";
+    return;
+  }
+  resultsCard.style.display = "";
+  resultsBody.innerHTML = lastResults.map((r, i) => rowHtml(r, i)).join("");
+  // Wire copy buttons
+  resultsBody.querySelectorAll(".copy-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const txt = btn.getAttribute("data-copy");
+      navigator.clipboard.writeText(txt).then(() => {
+        btn.textContent = "Copied!";
+        btn.classList.add("copied");
+        setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1200);
+      });
+    });
+  });
+}
+
+async function runLookup() {
+  const urls = parseUrls(urlsEl.value);
+  if (!urls.length) {
+    setStatus('<span class="error-text">Please paste at least one URL.</span>');
+    return;
+  }
+  lookupBtn.disabled = true;
+  setStatus(`<span class="spinner"></span>Processing ${urls.length} URL${urls.length === 1 ? "" : "s"}…`);
+  lastResults = urls.map(u => ({ url: u, pending: true }));
+  render();
+
+  // Run with a small concurrency limit to be polite
+  const CONCURRENCY = 4;
+  let cursor = 0;
+  let done = 0;
+
+  async function worker() {
+    while (cursor < urls.length) {
+      const idx = cursor++;
+      const url = urls[idx];
+      try {
+        const res = await lookupOne(url);
+        lastResults[idx] = res;
+      } catch (err) {
+        lastResults[idx] = { url, ok: false, error: err.message || String(err) };
+      } finally {
+        done++;
+        setStatus(`<span class="spinner"></span>Processed ${done} / ${urls.length}…`);
+        render();
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, urls.length) }, worker));
+
+  const okCount = lastResults.filter(r => r.ok).length;
+  const errCount = lastResults.length - okCount;
+  let msg = `<span class="success-text">${okCount} found</span>`;
+  if (errCount) msg += ` · <span class="error-text">${errCount} failed</span>`;
+  setStatus(msg);
+  lookupBtn.disabled = false;
+}
+
+function copyAll() {
+  const ids = lastResults.filter(r => r.ok).map(r => r.id).join("\n");
+  if (!ids) return;
+  navigator.clipboard.writeText(ids).then(() => {
+    copyAllBtn.textContent = "Copied!";
+    setTimeout(() => { copyAllBtn.textContent = "Copy All IDs"; }, 1200);
+  });
+}
+
+function exportCsv() {
+  const rows = [["Status", "Channel Name", "Input URL", "Channel ID"]];
+  for (const r of lastResults) {
+    rows.push([
+      r.ok ? "Found" : "Error",
+      r.name || "",
+      r.url,
+      r.ok ? r.id : (r.error || "")
+    ]);
+  }
+  const csv = rows.map(row =>
+    row.map(cell => {
+      const s = String(cell ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    }).join(",")
+  ).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "channel-ids.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+lookupBtn.addEventListener("click", runLookup);
+clearBtn.addEventListener("click", () => {
+  urlsEl.value = "";
+  lastResults = [];
+  setStatus("");
+  render();
+  urlsEl.focus();
+});
+sampleBtn.addEventListener("click", () => {
+  urlsEl.value = [
+    "https://www.youtube.com/@MrBeast",
+    "https://www.youtube.com/c/veritasium",
+    "https://www.youtube.com/user/PewDiePie",
+    "https://www.youtube.com/channel/UCBJycsmduvYEL83R_U4JriQ"
+  ].join("\n");
+});
+copyAllBtn.addEventListener("click", copyAll);
+exportBtn.addEventListener("click", exportCsv);
+
+// Cmd/Ctrl+Enter to submit
+urlsEl.addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    e.preventDefault();
+    runLookup();
+  }
+});
+</script>
+</body>
+</html>
