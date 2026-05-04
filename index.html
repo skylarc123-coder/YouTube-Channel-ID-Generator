@@ -340,14 +340,24 @@ function extractDirectId(url) {
 //   <meta itemprop="channelId" content="UC...">
 //   <link rel="canonical" href="https://www.youtube.com/channel/UC...">
 function extractIdFromHtml(html) {
+  // Priority order matters: head/meta tags describe the page itself and are
+  // far more trustworthy than generic JSON keys, which also appear inside
+  // related-channel widgets, recommendations, and sidebar content.
   const patterns = [
-    /"channelId":"(UC[\w-]{20,})"/,
+    // <head> metadata — most reliable, always refers to the page's channel
+    /<meta\s+itemprop="channelId"\s+content="(UC[\w-]{20,})"/,
+    /<meta\s+itemprop="identifier"\s+content="(UC[\w-]{20,})"/,
+    /<meta\s+itemprop="url"\s+content="https?:\/\/www\.youtube\.com\/channel\/(UC[\w-]{20,})"/,
+    /<link\s+rel="canonical"\s+href="https?:\/\/www\.youtube\.com\/channel\/(UC[\w-]{20,})"/,
+    /<meta\s+property="og:url"\s+content="https?:\/\/www\.youtube\.com\/channel\/(UC[\w-]{20,})"/,
+    // Channel header data inside ytInitialData
     /"externalId":"(UC[\w-]{20,})"/,
     /"externalChannelId":"(UC[\w-]{20,})"/,
+    // Generic fallbacks — these can match unrelated channels in the page,
+    // so they're only used when nothing more specific is found.
+    /"channelId":"(UC[\w-]{20,})"/,
     /"browseId":"(UC[\w-]{20,})"/,
     /"ucid":"(UC[\w-]{20,})"/,
-    /itemprop="channelId"\s+content="(UC[\w-]{20,})"/,
-    /<link\s+rel="canonical"\s+href="https?:\/\/www\.youtube\.com\/channel\/(UC[\w-]{20,})"/,
     /data-channel-external-id="(UC[\w-]{20,})"/,
     /\/channel\/(UC[\w-]{20,})/,
   ];
@@ -356,6 +366,33 @@ function extractIdFromHtml(html) {
     if (m) return m[1];
   }
   return null;
+}
+
+// Pull the identifier out of the input URL — the @handle, custom name, or
+// username — so we can sanity-check that the proxy returned the right page.
+function urlIdentifier(url) {
+  try {
+    const u = new URL(url);
+    const path = u.pathname.replace(/^\/+|\/+$/g, "");
+    if (!path) return null;
+    if (path.startsWith("@")) return path.split("/")[0];           // @handle
+    if (/^c\//i.test(path)) return path.split("/")[1];             // c/Name
+    if (/^user\//i.test(path)) return path.split("/")[1];          // user/Name
+    if (/^channel\//i.test(path)) return path.split("/")[1];       // channel/UC...
+    return path.split("/")[0];                                      // vanity (e.g. /mynation)
+  } catch {
+    return null;
+  }
+}
+
+// Confirm the fetched HTML actually corresponds to the requested page.
+// If a proxy returns a cached/wrong/error page, our extraction would lock
+// onto whatever channel ID it happens to contain — so reject HTML that
+// doesn't mention the input handle.
+function htmlMatchesUrl(html, url) {
+  const ident = urlIdentifier(url);
+  if (!ident) return true;
+  return html.toLowerCase().includes(ident.toLowerCase());
 }
 
 function extractChannelName(html) {
@@ -405,6 +442,12 @@ async function fetchAndExtract(url) {
       const html = await resp.text();
       if (!html || html.length < 500) {
         lastError = new Error("Empty response (proxy " + (i + 1) + ")");
+        continue;
+      }
+      // Reject responses where the input handle isn't mentioned anywhere —
+      // that's a strong signal the proxy returned a cached or wrong page.
+      if (!htmlMatchesUrl(html, target)) {
+        lastError = new Error("Wrong page returned (proxy " + (i + 1) + ")");
         continue;
       }
       const id = extractIdFromHtml(html);
