@@ -330,8 +330,20 @@
 </div>
 
 <script>
+// ---------- Built-in shared key ----------
+// Paste your YouTube Data API v3 key between the quotes below to embed it for all
+// visitors (so coworkers don't have to enter one). Leave "" to disable.
+// IMPORTANT: an embedded key is visible in this page's source. Restrict it in the
+// Google Cloud Console to the YouTube Data API AND to an HTTP referrer matching the
+// site's domain, or it can be copied and used to burn your daily quota.
+// ▼▼▼ PASTE YOUR API KEY BETWEEN THE QUOTES BELOW ▼▼▼
+const EMBEDDED_API_KEY = "AIzaSyBKAJmrCDQ8ZfAlcnJrIALuq2bjX9LzKkU";  // e.g. "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+// ▲▲▲ PASTE YOUR API KEY BETWEEN THE QUOTES ABOVE ▲▲▲
+
 // ---------- Persistence (guarded so it degrades gracefully where storage is blocked) ----------
 const KEY_STORAGE = "yt_channel_id_api_key";
+// Effective key: a key the user typed in this browser overrides the built-in one.
+function effectiveKey() { return (apiKeyEl?.value.trim()) || EMBEDDED_API_KEY; }
 function loadKey() {
   try { return localStorage.getItem(KEY_STORAGE) || ""; } catch { return ""; }
 }
@@ -587,9 +599,12 @@ const settingsCaret = $("settings-caret");
 let lastResults = [];
 
 function updateKeyStatus() {
-  const k = apiKeyEl.value.trim();
-  if (k) {
-    keyStatusEl.textContent = "Key set — lookups use the YouTube Data API.";
+  const userKey = apiKeyEl.value.trim();
+  if (userKey) {
+    keyStatusEl.textContent = "Your key set — lookups use the YouTube Data API.";
+    keyStatusEl.className = "key-status active";
+  } else if (EMBEDDED_API_KEY) {
+    keyStatusEl.textContent = "Using the built-in shared key — no setup needed. (Enter your own above to override.)";
     keyStatusEl.className = "key-status active";
   } else {
     keyStatusEl.textContent = "No key set — using public CORS proxies (less reliable).";
@@ -668,7 +683,7 @@ function render() {
 async function runLookup() {
   const urls = parseUrls(urlsEl.value);
   if (!urls.length) { setStatus('<span class="error-text">Please paste at least one URL.</span>'); return; }
-  const key = apiKeyEl.value.trim();
+  const key = effectiveKey();
   lookupBtn.disabled = true;
   setStatus(`<span class="spinner"></span>Processing ${urls.length} URL${urls.length === 1 ? "" : "s"}…`);
   lastResults = urls.map(u => ({ url: u, pending: true }));
