@@ -17,6 +17,7 @@
     --success: #3ddc84;
     --error: #ff5577;
     --warning: #ffb454;
+    --info: #5a9bff;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -79,9 +80,20 @@
     outline: none;
     transition: border-color 0.15s;
   }
-  textarea:focus {
-    border-color: var(--accent);
+  textarea:focus { border-color: var(--accent); }
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
   }
+  input[type="text"]:focus, input[type="password"]:focus { border-color: var(--accent); }
   .row {
     display: flex;
     gap: 12px;
@@ -109,9 +121,7 @@
     color: var(--text);
     border: 1px solid var(--border);
   }
-  button.secondary:hover:not(:disabled) {
-    background: var(--border);
-  }
+  button.secondary:hover:not(:disabled) { background: var(--border); }
   .status {
     color: var(--muted);
     font-size: 14px;
@@ -157,16 +167,9 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 13px;
   }
-  td.id .channel-id {
-    color: var(--success);
-    font-weight: 500;
-  }
-  td.id .error-msg {
-    color: var(--error);
-  }
-  td.name {
-    font-weight: 500;
-  }
+  td.id .channel-id { color: var(--success); font-weight: 500; }
+  td.id .error-msg { color: var(--error); }
+  td.name { font-weight: 500; }
   .copy-btn {
     background: transparent;
     color: var(--muted);
@@ -178,14 +181,8 @@
     cursor: pointer;
     transition: all 0.15s;
   }
-  .copy-btn:hover {
-    color: var(--text);
-    border-color: var(--accent);
-  }
-  .copy-btn.copied {
-    color: var(--success);
-    border-color: var(--success);
-  }
+  .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+  .copy-btn.copied { color: var(--success); border-color: var(--success); }
   .badge {
     display: inline-block;
     padding: 2px 8px;
@@ -198,11 +195,12 @@
   .badge.ok { background: rgba(61, 220, 132, 0.15); color: var(--success); }
   .badge.err { background: rgba(255, 85, 119, 0.15); color: var(--error); }
   .badge.pending { background: rgba(255, 180, 84, 0.15); color: var(--warning); }
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
+  .source-tag {
+    font-size: 10px;
     color: var(--muted);
-    font-size: 14px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
   .results-header {
     display: flex;
@@ -210,14 +208,8 @@
     align-items: center;
     margin-bottom: 16px;
   }
-  .results-header h2 {
-    margin: 0;
-    font-size: 18px;
-  }
-  .results-actions {
-    display: flex;
-    gap: 8px;
-  }
+  .results-header h2 { margin: 0; font-size: 18px; }
+  .results-actions { display: flex; gap: 8px; }
   .spinner {
     display: inline-block;
     width: 12px;
@@ -230,6 +222,37 @@
     margin-right: 6px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .settings-toggle {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+  }
+  .settings-toggle:hover { color: var(--text); background: none; }
+  .settings-body {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .help-text {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .help-text a { color: var(--info); }
+  .key-status {
+    font-size: 12px;
+    margin-top: 8px;
+  }
+  .key-status.active { color: var(--success); }
+  .key-status.inactive { color: var(--warning); }
   footer {
     text-align: center;
     color: var(--muted);
@@ -245,6 +268,24 @@
     <h1><span class="accent">YouTube</span> Channel ID Generator</h1>
     <p>Paste one or more YouTube channel URLs (one per line). Get the Channel IDs in seconds.</p>
   </header>
+
+  <div class="card">
+    <button class="settings-toggle" id="settings-toggle">
+      <span id="settings-caret">&#9656;</span> API Key (optional, recommended for reliability)
+    </button>
+    <div class="settings-body" id="settings-body" style="display:none;">
+      <label class="field-label" for="apikey">YouTube Data API v3 Key</label>
+      <input type="password" id="apikey" placeholder="AIza..." autocomplete="off" spellcheck="false" />
+      <div class="key-status inactive" id="key-status">No key set &mdash; using public CORS proxies (less reliable).</div>
+      <div class="help-text">
+        With a key, lookups go directly to YouTube's API (fast, reliable, no proxies).
+        Get a free key: <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a>
+        &rarr; create a project &rarr; enable "YouTube Data API v3" &rarr; Credentials &rarr; Create API key.
+        Free quota is 10,000 units/day; most lookups cost 1 unit (custom <code>/c/</code> and bare
+        vanity names cost 100). Your key is stored only in this browser and never sent anywhere except Google.
+      </div>
+    </div>
+  </div>
 
   <div class="card">
     <label class="field-label" for="urls">Channel URLs</label>
@@ -284,35 +325,28 @@
   </div>
 
   <footer>
-    Channel IDs are extracted from the public YouTube page metadata via a CORS proxy. No data is stored.
+    Channel IDs come from the YouTube Data API when a key is set, otherwise from public page metadata via a CORS proxy. No data is stored on any server.
   </footer>
 </div>
 
 <script>
-// ---------- Utilities ----------
+// ---------- Persistence (guarded so it degrades gracefully where storage is blocked) ----------
+const KEY_STORAGE = "yt_channel_id_api_key";
+function loadKey() {
+  try { return localStorage.getItem(KEY_STORAGE) || ""; } catch { return ""; }
+}
+function saveKey(v) {
+  try { if (v) localStorage.setItem(KEY_STORAGE, v); else localStorage.removeItem(KEY_STORAGE); } catch {}
+}
 
-// Try multiple public CORS proxies in order. If one is rate-limited or down,
-// the next is tried automatically. Each entry is a function: url -> proxied url.
-const PROXIES = [
-  url => "https://corsproxy.io/?url=" + encodeURIComponent(url),
-  url => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
-  url => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(url),
-  url => "https://cors.eu.org/" + url,
-  url => "https://thingproxy.freeboard.io/fetch/" + url,
-];
-
+// ---------- URL parsing / classification ----------
 function parseUrls(raw) {
-  return raw.split(/[\n,]+/)
-    .map(s => s.trim())
-    .filter(Boolean)
-    .map(normalizeUrl);
+  return raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean).map(normalizeUrl);
 }
 
 function normalizeUrl(input) {
   let s = input.trim();
-  // Strip any trailing punctuation
   s = s.replace(/[)\].,;]+$/, "");
-  // Add scheme if missing
   if (!/^https?:\/\//i.test(s)) {
     if (s.startsWith("@")) {
       s = "https://www.youtube.com/" + s;
@@ -321,40 +355,99 @@ function normalizeUrl(input) {
     } else if (/^(channel|c|user)\//i.test(s)) {
       s = "https://www.youtube.com/" + s;
     } else {
-      // Assume it's a handle without @
       s = "https://www.youtube.com/@" + s.replace(/^\/+/, "");
     }
   }
   return s;
 }
 
-// Try to extract channel ID directly from /channel/UC... URLs without a network call.
+// Classify a URL into {type, value} so we can pick the right API endpoint.
+//   type: 'id' | 'handle' | 'username' | 'custom'
+function classifyUrl(url) {
+  try {
+    const u = new URL(url);
+    const path = u.pathname.replace(/^\/+|\/+$/g, "");
+    if (!path) return { type: "custom", value: "" };
+    const first = path.split("/")[0];
+    if (first.startsWith("@")) return { type: "handle", value: first };
+    if (/^channel$/i.test(first)) return { type: "id", value: path.split("/")[1] || "" };
+    if (/^user$/i.test(first)) return { type: "username", value: path.split("/")[1] || "" };
+    if (/^c$/i.test(first)) return { type: "custom", value: path.split("/")[1] || "" };
+    return { type: "custom", value: first }; // bare vanity path
+  } catch {
+    return { type: "custom", value: "" };
+  }
+}
+
 function extractDirectId(url) {
   const m = url.match(/\/channel\/(UC[\w-]{20,})/i);
   return m ? m[1] : null;
 }
 
-// Search HTML for a channel ID. YouTube embeds it in several places:
-//   "channelId":"UC..."
-//   "externalId":"UC..."
-//   <meta itemprop="channelId" content="UC...">
-//   <link rel="canonical" href="https://www.youtube.com/channel/UC...">
+// ---------- YouTube Data API path ----------
+const API_BASE = "https://www.googleapis.com/youtube/v3";
+
+async function apiCall(endpoint, params, key) {
+  const qs = new URLSearchParams({ ...params, key }).toString();
+  const resp = await fetch(`${API_BASE}/${endpoint}?${qs}`);
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    const reason = data?.error?.errors?.[0]?.reason || "";
+    const msg = data?.error?.message || ("HTTP " + resp.status);
+    const e = new Error(reason ? `${msg} (${reason})` : msg);
+    e.reason = reason;
+    throw e;
+  }
+  return data;
+}
+
+async function resolveViaApi(url, key) {
+  const { type, value } = classifyUrl(url);
+  if ((type === "id" || type === "handle" || type === "username") && !value) {
+    throw new Error("Couldn't read identifier from URL");
+  }
+
+  if (type === "id") {
+    // We already have the ID; one cheap call just to fetch the channel name.
+    const data = await apiCall("channels", { part: "snippet", id: value }, key);
+    const item = data.items?.[0];
+    return { id: value, name: item?.snippet?.title || "" };
+  }
+
+  if (type === "handle" || type === "username") {
+    const param = type === "handle" ? "forHandle" : "forUsername";
+    const data = await apiCall("channels", { part: "snippet", [param]: value }, key);
+    const item = data.items?.[0];
+    if (!item) throw new Error("No channel found for " + value);
+    return { id: item.id, name: item.snippet?.title || "" };
+  }
+
+  // custom / vanity — no direct lookup exists, so search (100 quota units).
+  const data = await apiCall("search", {
+    part: "snippet", type: "channel", maxResults: "1", q: value
+  }, key);
+  const item = data.items?.[0];
+  if (!item) throw new Error("No channel found for " + value);
+  return { id: item.snippet?.channelId || item.id?.channelId, name: item.snippet?.title || "" };
+}
+
+// ---------- CORS proxy path (fallback) ----------
+const PROXIES = [
+  url => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(url),
+  url => "https://corsfix.com/" + url,
+  url => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
+  url => "https://cors.x2u.in/" + url,
+];
+
 function extractIdFromHtml(html) {
-  // Priority order matters: head/meta tags describe the page itself and are
-  // far more trustworthy than generic JSON keys, which also appear inside
-  // related-channel widgets, recommendations, and sidebar content.
   const patterns = [
-    // <head> metadata — most reliable, always refers to the page's channel
     /<meta\s+itemprop="channelId"\s+content="(UC[\w-]{20,})"/,
     /<meta\s+itemprop="identifier"\s+content="(UC[\w-]{20,})"/,
     /<meta\s+itemprop="url"\s+content="https?:\/\/www\.youtube\.com\/channel\/(UC[\w-]{20,})"/,
     /<link\s+rel="canonical"\s+href="https?:\/\/www\.youtube\.com\/channel\/(UC[\w-]{20,})"/,
     /<meta\s+property="og:url"\s+content="https?:\/\/www\.youtube\.com\/channel\/(UC[\w-]{20,})"/,
-    // Channel header data inside ytInitialData
     /"externalId":"(UC[\w-]{20,})"/,
     /"externalChannelId":"(UC[\w-]{20,})"/,
-    // Generic fallbacks — these can match unrelated channels in the page,
-    // so they're only used when nothing more specific is found.
     /"channelId":"(UC[\w-]{20,})"/,
     /"browseId":"(UC[\w-]{20,})"/,
     /"ucid":"(UC[\w-]{20,})"/,
@@ -368,27 +461,19 @@ function extractIdFromHtml(html) {
   return null;
 }
 
-// Pull the identifier out of the input URL — the @handle, custom name, or
-// username — so we can sanity-check that the proxy returned the right page.
 function urlIdentifier(url) {
   try {
     const u = new URL(url);
     const path = u.pathname.replace(/^\/+|\/+$/g, "");
     if (!path) return null;
-    if (path.startsWith("@")) return path.split("/")[0];           // @handle
-    if (/^c\//i.test(path)) return path.split("/")[1];             // c/Name
-    if (/^user\//i.test(path)) return path.split("/")[1];          // user/Name
-    if (/^channel\//i.test(path)) return path.split("/")[1];       // channel/UC...
-    return path.split("/")[0];                                      // vanity (e.g. /mynation)
-  } catch {
-    return null;
-  }
+    if (path.startsWith("@")) return path.split("/")[0];
+    if (/^c\//i.test(path)) return path.split("/")[1];
+    if (/^user\//i.test(path)) return path.split("/")[1];
+    if (/^channel\//i.test(path)) return path.split("/")[1];
+    return path.split("/")[0];
+  } catch { return null; }
 }
 
-// Confirm the fetched HTML actually corresponds to the requested page.
-// If a proxy returns a cached/wrong/error page, our extraction would lock
-// onto whatever channel ID it happens to contain — so reject HTML that
-// doesn't mention the input handle.
 function htmlMatchesUrl(html, url) {
   const ident = urlIdentifier(url);
   if (!ident) return true;
@@ -412,22 +497,15 @@ function decodeHtmlEntities(s) {
   return t.value;
 }
 
-// Append a language hint to discourage YouTube's EU consent-wall redirect,
-// which strips channel metadata from the HTML.
 function withHl(url) {
   try {
     const u = new URL(url);
     if (!u.searchParams.has("hl")) u.searchParams.set("hl", "en");
     if (!u.searchParams.has("persist_hl")) u.searchParams.set("persist_hl", "1");
     return u.toString();
-  } catch {
-    return url;
-  }
+  } catch { return url; }
 }
 
-// Try each proxy in turn. A proxy "succeeds" only if its HTML actually contains
-// a channel ID — otherwise we fall through to the next proxy. This handles cases
-// where a proxy returns a truncated page or a consent wall.
 async function fetchAndExtract(url) {
   const target = withHl(url);
   let lastError = null;
@@ -435,26 +513,12 @@ async function fetchAndExtract(url) {
     const proxied = PROXIES[i](target);
     try {
       const resp = await fetch(proxied, { method: "GET" });
-      if (!resp.ok) {
-        lastError = new Error("HTTP " + resp.status + " (proxy " + (i + 1) + ")");
-        continue;
-      }
+      if (!resp.ok) { lastError = new Error("HTTP " + resp.status + " (proxy " + (i + 1) + ")"); continue; }
       const html = await resp.text();
-      if (!html || html.length < 500) {
-        lastError = new Error("Empty response (proxy " + (i + 1) + ")");
-        continue;
-      }
-      // Reject responses where the input handle isn't mentioned anywhere —
-      // that's a strong signal the proxy returned a cached or wrong page.
-      if (!htmlMatchesUrl(html, target)) {
-        lastError = new Error("Wrong page returned (proxy " + (i + 1) + ")");
-        continue;
-      }
+      if (!html || html.length < 500) { lastError = new Error("Empty response (proxy " + (i + 1) + ")"); continue; }
+      if (!htmlMatchesUrl(html, target)) { lastError = new Error("Wrong page returned (proxy " + (i + 1) + ")"); continue; }
       const id = extractIdFromHtml(html);
-      if (id) {
-        return { id, name: extractChannelName(html) };
-      }
-      // Got HTML but no ID — likely a consent or error page. Try next proxy.
+      if (id) return { id, name: extractChannelName(html) };
       lastError = new Error("No ID in response (proxy " + (i + 1) + ")");
     } catch (err) {
       lastError = new Error((err.message || String(err)) + " (proxy " + (i + 1) + ")");
@@ -463,23 +527,47 @@ async function fetchAndExtract(url) {
   throw lastError || new Error("All proxies failed");
 }
 
-async function lookupOne(url) {
+async function lookupViaProxy(url) {
   const direct = extractDirectId(url);
   if (direct) {
-    // Try to fetch the page for the channel name, but don't fail if it errors.
-    try {
-      const { name } = await fetchAndExtract(url);
-      return { url, id: direct, name, ok: true };
-    } catch {
-      return { url, id: direct, name: "", ok: true };
-    }
+    try { const { name } = await fetchAndExtract(url); return { url, id: direct, name, ok: true, source: "proxy" }; }
+    catch { return { url, id: direct, name: "", ok: true, source: "proxy" }; }
   }
   const { id, name } = await fetchAndExtract(url);
-  return { url, id, name, ok: true };
+  return { url, id, name, ok: true, source: "proxy" };
+}
+
+// ---------- Unified lookup: API when key present, proxy fallback ----------
+async function lookupOne(url, key) {
+  if (key) {
+    try {
+      const { id, name } = await resolveViaApi(url, key);
+      if (id) return { url, id, name, ok: true, source: "api" };
+      throw new Error("API returned no ID");
+    } catch (err) {
+      // Quota/auth problems are worth surfacing; for other failures we still
+      // try the proxy chain as a backstop so a result is better than nothing.
+      const fatal = /quota|keyInvalid|forbidden|API key|disabled/i.test(err.message || "");
+      try {
+        const viaProxy = await lookupViaProxy(url);
+        viaProxy.note = "API failed (" + (err.message || "error") + "); used proxy";
+        return viaProxy;
+      } catch (perr) {
+        const detail = fatal
+          ? err.message
+          : (err.message || "API error") + "; proxy also failed: " + (perr.message || perr);
+        return { url, ok: false, error: detail };
+      }
+    }
+  }
+  try {
+    return await lookupViaProxy(url);
+  } catch (err) {
+    return { url, ok: false, error: err.message || String(err) };
+  }
 }
 
 // ---------- UI ----------
-
 const $ = id => document.getElementById(id);
 const urlsEl = $("urls");
 const lookupBtn = $("lookup");
@@ -490,35 +578,63 @@ const resultsCard = $("results-card");
 const resultsBody = $("results-body");
 const copyAllBtn = $("copy-all");
 const exportBtn = $("export-csv");
+const apiKeyEl = $("apikey");
+const keyStatusEl = $("key-status");
+const settingsToggle = $("settings-toggle");
+const settingsBody = $("settings-body");
+const settingsCaret = $("settings-caret");
 
 let lastResults = [];
+
+function updateKeyStatus() {
+  const k = apiKeyEl.value.trim();
+  if (k) {
+    keyStatusEl.textContent = "Key set — lookups use the YouTube Data API.";
+    keyStatusEl.className = "key-status active";
+  } else {
+    keyStatusEl.textContent = "No key set — using public CORS proxies (less reliable).";
+    keyStatusEl.className = "key-status inactive";
+  }
+}
+
+// Restore saved key and reflect its state
+apiKeyEl.value = loadKey();
+if (apiKeyEl.value) { settingsBody.style.display = ""; settingsCaret.textContent = "▾"; }
+updateKeyStatus();
+
+settingsToggle.addEventListener("click", () => {
+  const open = settingsBody.style.display !== "none";
+  settingsBody.style.display = open ? "none" : "";
+  settingsCaret.textContent = open ? "▸" : "▾";
+});
+apiKeyEl.addEventListener("input", () => { saveKey(apiKeyEl.value.trim()); updateKeyStatus(); });
 
 function setStatus(html) { statusEl.innerHTML = html; }
 
 function rowHtml(r, idx) {
   const num = `<td class="row-num">${idx + 1}</td>`;
   if (r.pending) {
-    return `<tr data-idx="${idx}">
-      ${num}
+    return `<tr><td class="row-num">${idx + 1}</td>
       <td><span class="badge pending"><span class="spinner"></span>Looking up</span></td>
-      <td class="name">—</td>
-      <td class="url">${escapeHtml(r.url)}</td>
-      <td class="id">—</td>
-    </tr>`;
+      <td class="name">—</td><td class="url">${escapeHtml(r.url)}</td><td class="id">—</td></tr>`;
   }
   if (r.ok) {
-    return `<tr data-idx="${idx}">
+    const srcTag = r.source === "api" ? '<span class="source-tag">API</span>'
+      : (r.source === "proxy" ? '<span class="source-tag">proxy</span>' : "");
+    const note = r.note ? `<div class="help-text" style="margin-top:4px;color:var(--warning);">${escapeHtml(r.note)}</div>` : "";
+    return `<tr>
       ${num}
-      <td><span class="badge ok">Found</span></td>
+      <td><span class="badge ok">Found</span>${srcTag}</td>
       <td class="name">${escapeHtml(r.name || "—")}</td>
       <td class="url"><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" style="color:var(--muted);">${escapeHtml(r.url)}</a></td>
       <td class="id">
         <span class="channel-id">${escapeHtml(r.id)},</span>
         <button class="copy-btn" data-copy="${escapeHtml(r.id)},">Copy</button>
+        ${note}
       </td>
     </tr>`;
   }
-  return `<tr data-idx="${idx}">
+  return `<tr>
     ${num}
     <td><span class="badge err">Error</span></td>
     <td class="name">—</td>
@@ -534,13 +650,9 @@ function escapeHtml(s) {
 }
 
 function render() {
-  if (!lastResults.length) {
-    resultsCard.style.display = "none";
-    return;
-  }
+  if (!lastResults.length) { resultsCard.style.display = "none"; return; }
   resultsCard.style.display = "";
   resultsBody.innerHTML = lastResults.map((r, i) => rowHtml(r, i)).join("");
-  // Wire copy buttons
   resultsBody.querySelectorAll(".copy-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const txt = btn.getAttribute("data-copy");
@@ -555,34 +667,24 @@ function render() {
 
 async function runLookup() {
   const urls = parseUrls(urlsEl.value);
-  if (!urls.length) {
-    setStatus('<span class="error-text">Please paste at least one URL.</span>');
-    return;
-  }
+  if (!urls.length) { setStatus('<span class="error-text">Please paste at least one URL.</span>'); return; }
+  const key = apiKeyEl.value.trim();
   lookupBtn.disabled = true;
   setStatus(`<span class="spinner"></span>Processing ${urls.length} URL${urls.length === 1 ? "" : "s"}…`);
   lastResults = urls.map(u => ({ url: u, pending: true }));
   render();
 
-  // Run with a small concurrency limit to be polite
   const CONCURRENCY = 4;
-  let cursor = 0;
-  let done = 0;
+  let cursor = 0, done = 0;
 
   async function worker() {
     while (cursor < urls.length) {
       const idx = cursor++;
       const url = urls[idx];
-      try {
-        const res = await lookupOne(url);
-        lastResults[idx] = res;
-      } catch (err) {
-        lastResults[idx] = { url, ok: false, error: err.message || String(err) };
-      } finally {
-        done++;
-        setStatus(`<span class="spinner"></span>Processed ${done} / ${urls.length}…`);
-        render();
-      }
+      lastResults[idx] = await lookupOne(url, key);
+      done++;
+      setStatus(`<span class="spinner"></span>Processed ${done} / ${urls.length}…`);
+      render();
     }
   }
 
@@ -599,8 +701,6 @@ async function runLookup() {
 function copyAll() {
   const okIds = lastResults.filter(r => r.ok).map(r => r.id);
   if (!okIds.length) return;
-  // Each ID gets a trailing ", " and sits on its own line — readable when
-  // pasted, and still parseable as a comma-separated list.
   const ids = okIds.map(id => id + ", ").join("\n");
   navigator.clipboard.writeText(ids).then(() => {
     copyAllBtn.textContent = "Copied!";
@@ -609,13 +709,14 @@ function copyAll() {
 }
 
 function exportCsv() {
-  const rows = [["Status", "Channel Name", "Input URL", "Channel ID"]];
+  const rows = [["Status", "Channel Name", "Input URL", "Channel ID", "Source"]];
   for (const r of lastResults) {
     rows.push([
       r.ok ? "Found" : "Error",
       r.name || "",
       r.url,
-      r.ok ? r.id + "," : (r.error || "")
+      r.ok ? r.id + "," : (r.error || ""),
+      r.ok ? (r.source || "") : ""
     ]);
   }
   const csv = rows.map(row =>
@@ -627,21 +728,14 @@ function exportCsv() {
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
-  a.download = "channel-ids.csv";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  a.href = url; a.download = "channel-ids.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
 lookupBtn.addEventListener("click", runLookup);
 clearBtn.addEventListener("click", () => {
-  urlsEl.value = "";
-  lastResults = [];
-  setStatus("");
-  render();
-  urlsEl.focus();
+  urlsEl.value = ""; lastResults = []; setStatus(""); render(); urlsEl.focus();
 });
 sampleBtn.addEventListener("click", () => {
   urlsEl.value = [
@@ -653,13 +747,8 @@ sampleBtn.addEventListener("click", () => {
 });
 copyAllBtn.addEventListener("click", copyAll);
 exportBtn.addEventListener("click", exportCsv);
-
-// Cmd/Ctrl+Enter to submit
 urlsEl.addEventListener("keydown", e => {
-  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-    e.preventDefault();
-    runLookup();
-  }
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); runLookup(); }
 });
 </script>
 </body>
